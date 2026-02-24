@@ -1,5 +1,32 @@
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>DATA USER SYSTEM</title>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+  <style>
+    body{
+      background:black;
+      color:white;
+      font-family:Arial;
+      padding:20px;
+    }
+    .user{
+      background:#111;
+      padding:10px;
+      margin:10px 0;
+      border-radius:8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>🔒 DATA USER SYSTEM</h2>
+<div id="list">Loading...</div>
 
 <script>
 const firebaseConfig = {
@@ -15,7 +42,26 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-db.ref("/").once("value").then(snap=>{
-  console.log("DATA:", snap.val());
+db.ref("/").on("value", snapshot => {
+  const data = snapshot.val();
+  const list = document.getElementById("list");
+
+  if(!data){
+    list.innerHTML = "No data found";
+    return;
+  }
+
+  list.innerHTML = "";
+
+  Object.keys(data).forEach(key=>{
+    list.innerHTML += `
+      <div class="user">
+        <pre>${JSON.stringify(data[key], null, 2)}</pre>
+      </div>
+    `;
+  });
 });
 </script>
+
+</body>
+</html>
