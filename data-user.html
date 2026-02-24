@@ -100,7 +100,7 @@ db.ref("users").once("value", function(snapshot) {
   document.getElementById("list").innerHTML = "Lỗi: " + error.message;
 });
   function unbanUser(uid){
-  db.ref("users/" + uid + "/banned").set(false)
+    db.ref("users/" + uid + "/banned").set(false)
   .then(()=>{
     alert("Đã mở khóa");
     location.reload();
@@ -110,7 +110,9 @@ db.ref("users").once("value", function(snapshot) {
   });
   }
   function deleteUser(uid){
-  if (!confirm("Bạn có chắc muốn XÓA tài khoản này?")) return;
+    alert("ĐÃ BẤM NÚT XÓA");
+
+    if (!confirm("Bạn có chắc muốn XÓA tài khoản này?")) return;
 
   db.ref("users/" + uid).remove()
     .then(()=>{
