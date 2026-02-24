@@ -36,9 +36,10 @@ button{padding:8px;border:none;border-radius:6px;margin-top:5px}
 <div id="teamSection" class="section" style="display:none"></div>
 
 <script>
+// ====== ADMIN HARD LOCK ======
+const ADMIN_UID   = "o4WlbBoDRbPOTvbg69juPM7Iq0s1"; // 
 
-const ADMIN_ID = "o4WlbBoDRbPOTvbg69juPM7Iq0s1";
-
+// ====== FIREBASE CONFIG (giữ nguyên của mày) ======
 const firebaseConfig = {
 apiKey: "AIzaSyCvKaa4S4icydrj2JYA5ch0ckGC_mT0bvc",
 authDomain: "vietnamontop-77401.firebaseapp.com",
@@ -53,29 +54,17 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
+// ====== AUTH ======
 function register(){
-  const u = username.value;
-  const e = email.value;
-  const p = password.value;
-
-  auth.createUserWithEmailAndPassword(e,p)
-.then(cred=>{
-
-  const user = cred.user;
-
-  db.ref("users/"+user.uid).set({
-    username: u,
-    email: e,
-    uid: user.uid,
-    createdAt: new Date().toISOString(),
-    banned: false,
-    premium: false,
-    role: "user"
-  });
-
-  alert("Đăng ký thành công");
-})
-.catch(err=>alert(err.message));
+  auth.createUserWithEmailAndPassword(email.value,password.value)
+  .then(cred=>{
+    db.ref("users/"+cred.user.uid).set({
+      username:username.value,
+      banned:false
+    });
+    alert("Đăng ký thành công");
+  })
+  .catch(err=>alert(err.message));
 }
 
 function login(){
@@ -84,79 +73,92 @@ function login(){
 }
 
 auth.onAuthStateChanged(user=>{
-  if(user){
-    db.ref("users/"+user.uid).once("value").then(snap=>{
-      if(snap.val()?.banned){
-        alert("🚫 Bạn đã vi phạm chính sách.");
-        auth.signOut();
-        return;
-      }
-      loadApp(user.uid);
-    });
-  } else {
+  if(!user){
     authSection.style.display="block";
     appSection.style.display="none";
     teamSection.style.display="none";
+    return;
   }
+
+  const isAdmin =
+    user.email === ADMIN_EMAIL ||
+    user.uid   === ADMIN_UID;
+
+  // 🔐 Nếu là admin → tự động xoá mọi dấu vết banned/kick
+  if(isAdmin){
+    db.ref("users/"+user.uid+"/banned").set(false);
+    db.ref("kicks/"+user.uid).remove();
+  }
+
+  db.ref("users/"+user.uid).once("value").then(snap=>{
+    const data = snap.val();
+
+    // 🚫 Chỉ user thường mới bị ban
+    if(data?.banned && !isAdmin){
+      alert("🚫 Bạn đã vi phạm chính sách.");
+      auth.signOut();
+      return;
+    }
+
+    // ⚠️ Kick check (không áp dụng admin)
+    db.ref("kicks/"+user.uid).once("value").then(k=>{
+      if(k.exists() && !isAdmin){
+        alert("⚠️ Bạn đã bị kick.");
+        db.ref("kicks/"+user.uid).remove();
+        auth.signOut();
+        return;
+      }
+      loadApp(user,isAdmin,data?.username);
+    });
+
+  });
 });
 
-function loadApp(uid){
+// ====== APP LOAD ======
+function loadApp(user,isAdmin,username){
   authSection.style.display="none";
   appSection.style.display="block";
   teamSection.style.display="none";
 
-  db.ref("users/"+uid).once("value").then(snap=>{
-    const data=snap.val();
-    let tag = uid===ADMIN_ID?" 🛡":"";
-    let idDisplay = uid===ADMIN_ID?"Staff App: Admin":uid;
+  let tag = isAdmin ? " 🛡" : "";
+  let idDisplay = isAdmin ? "Administrator" : user.uid;
 
-    let html=`
-    <h3>Hồ sơ</h3>
-    Tên: ${data.username}${tag}<br>
-    ID: ${idDisplay}<br>
-    <button onclick="logout()">Đăng xuất tài khoản</button>
-    <hr>
-    <h3>Danh sách Ghép Đội</h3>
-    `;
+  let html=`
+  <h3>Hồ sơ</h3>
+  Tên: ${username}${tag}<br>
+  Email: ${user.email}<br>
+  ID: ${idDisplay}<br>
+  <button onclick="logout()">Đăng xuất</button>
+  <hr>
+  <h3>Danh sách Đội</h3>
+  `;
 
-    for(let i=1;i<=20;i++){
-      html+=`<div class="team" onclick="enterTeam(${i})">Đội ${i}</div>`;
-    }
+  for(let i=1;i<=20;i++){
+    html+=`<div class="team" onclick="enterTeam(${i})">Đội ${i}</div>`;
+  }
 
-    if(uid===ADMIN_ID){
-      html+=`
-      <div class="admin">
-      <h3>🛡 ADMIN PANEL</h3>
-      <button onclick="banUser()">Ban User</button>
-      <button onclick="kickUser()">Kick User</button>
-      </div>
-      `;
-    }
+  if(isAdmin){
+    html+=`
+    <div class="admin">
+    <h3>🛡 ADMIN PANEL</h3>
+    <button onclick="banUser()">Ban User</button>
+    <button onclick="kickUser()">Kick User</button>
+    </div>`;
+  }
 
-    appSection.innerHTML=html;
-  });
+  appSection.innerHTML=html;
 }
 
-function logout(){
-  auth.signOut();
-}
+function logout(){ auth.signOut(); }
 
 function enterTeam(num){
   appSection.style.display="none";
-  teamSection.style.display= "block";
-
-  teamSection.innerHTML= `
+  teamSection.style.display="block";
+  teamSection.innerHTML=`
   <button class="back" onclick="back()">← Back</button>
   <h2>🇻🇳 Đội ${num}</h2>
   <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg" width="120">
-
-  <div id="messages" style="margin-top:20px;"></div>
-
-  <input id="msgInput" placeholder="Nhập tin nhắn">
-  <button onclick="sendMsg(${num})">Gửi</button>
   `;
-
-  loadMessages(num);
 }
 
 function back(){
@@ -164,10 +166,11 @@ function back(){
   appSection.style.display="block";
 }
 
+// ====== ADMIN ACTIONS (KHÔNG ĐƯỢC ĐỘNG ADMIN) ======
 function banUser(){
   const uid=prompt("Nhập UID cần BAN:");
   if(!uid) return;
-  if(uid===ADMIN_ID){alert("Không thể ban ADMIN");return;}
+  if(uid===ADMIN_UID){ alert("Không thể ban ADMIN"); return; }
   db.ref("users/"+uid+"/banned").set(true);
   alert("Đã BAN UID: "+uid);
 }
@@ -175,44 +178,10 @@ function banUser(){
 function kickUser(){
   const uid=prompt("Nhập UID cần KICK:");
   if(!uid) return;
-  if(uid===ADMIN_ID){alert("Không thể kick ADMIN");return;}
+  if(uid===ADMIN_UID){ alert("Không thể kick ADMIN"); return; }
   db.ref("kicks/"+uid).set(true);
   alert("Đã Kick UID: "+uid);
 }
-  function loadMessages(num){
-  db.ref("teams/team"+num).on("value", snap=>{
-    let data = snap.val();
-    let html = "";
-
-    if(data){
-      for(let id in data){
-        html += `<p><b>${data[id].sender}:</b> ${data[id].message}</p>`;
-      }
-    }
-
-    document.getElementById("messages").innerHTML = html;
-  });
-}
-
-function sendMsg(num){
-  let msg = document.getElementById("msgInput").value;
-  let user = auth.currentUser;
-
-  if(!msg) return;
-
-  db.ref("teams/team"+num).push({
-    sender: user.email,
-    message: msg,
-    time: Date.now()
-  });
-
-  document.getElementById("msgInput").value="";
-}
-
 </script>
-<div id="appSection"></div>
-<div id="teamSection" style="display:none;"></div>
-<h1>Vietnam On Top</h1>
-
 </body>
 </html>
