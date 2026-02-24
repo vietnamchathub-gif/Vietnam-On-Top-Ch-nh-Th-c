@@ -145,7 +145,7 @@ function enterTeam(num){
   appSection.style.display="none";
   teamSection.style.display= "block";
 
-  teamSection.innerHTML=`
+  teamSection.innerHTML= `
   <button class="back" onclick="back()">← Back</button>
   <h2>🇻🇳 Đội ${num}</h2>
   <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg" width="120">
@@ -210,5 +210,9 @@ function sendMsg(num){
 }
 
 </script>
+<div id="appSection"></div>
+<div id="teamSection" style="display:none;"></div>
+<h1>Vietnam On Top</h1>
+
 </body>
 </html>
