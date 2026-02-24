@@ -3,6 +3,7 @@
 <head>
   <title>Recruitment</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body{
       background:#111;
@@ -25,6 +26,11 @@
       background:red;
       color:white;
       font-weight:bold;
+      cursor:pointer;
+    }
+    button:disabled{
+      background:gray;
+      cursor:not-allowed;
     }
   </style>
 </head>
@@ -36,7 +42,8 @@
 <input id="email" placeholder="Your Email">
 <textarea id="reason" placeholder="Why join?" rows="4"></textarea>
 
-<button id="applyBtn" onclick="apply()">Apply</button>
+<br>
+<button id="applyBtn">Apply</button>
 <p id="status"></p>
 <p id="countdown" style="color:orange;"></p>
 
@@ -45,116 +52,129 @@
 
 <script>
 
-  const firebaseConfig = {
-    // DÁN firebaseConfig của mày vào đây
-  };
+const firebaseConfig = {
+  apiKey: "DÁN_APIKEY",
+  authDomain: "DÁN_AUTHDOMAIN",
+  databaseURL: "DÁN_DATABASEURL",
+  projectId: "DÁN_PROJECTID",
+  storageBucket: "DÁN_STORAGE",
+  messagingSenderId: "DÁN_SENDERID",
+  appId: "DÁN_APPID"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  const TWO_YEARS = 1000 * 60 * 60 * 24 * 365 * 2;
+const TWO_YEARS = 1000 * 60 * 60 * 24 * 365 * 2;
 
-  function apply(){
+const applyBtn = document.getElementById("applyBtn");
+const statusText = document.getElementById("status");
+const countdownText = document.getElementById("countdown");
 
-    db.ref("recruitmentLock").once("value", lockSnap=>{
-      if(lockSnap.exists()){
-        alert("Đã giới hạn lượt ứng tuyển");
-        return;
-      }
+applyBtn.addEventListener("click", apply);
 
-      const name = nameInput.value;
-      const email = emailInput.value;
-      const reason = reasonInput.value;
+function apply(){
 
-      if(!name || !email || !reason){
-        alert("Fill all fields");
-        return;
-      }
+  db.ref("recruitmentLock").once("value").then(lockSnap=>{
 
-      const id = Date.now();
+    if(lockSnap.exists()){
+      alert("Đã giới hạn lượt ứng tuyển");
+      return;
+    }
 
-      db.ref("applications/"+id).set({
-        name:name,
-        email:email,
-        reason:reason,
-        createdAt:Date.now()
-      }).then(()=>{
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const reason = document.getElementById("reason").value.trim();
 
-        db.ref("applications").once("value", snap=>{
+    if(!name || !email || !reason){
+      alert("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
 
-          const data = snap.val();
-          const keys = Object.keys(data);
+    const id = Date.now();
 
-          if(keys.length >= 100){
+    db.ref("applications/"+id).set({
+      name,
+      email,
+      reason,
+      createdAt: Date.now()
+    }).then(()=>{
 
-            // Random chọn 5 hồ sơ
-            const shuffled = keys.sort(()=>0.5 - Math.random());
-            const selected = shuffled.slice(0,5);
+      db.ref("applications").once("value").then(snap=>{
 
-            const selectedData = {};
-            selected.forEach(k=>{
-              selectedData[k] = data[k];
-            });
+        const data = snap.val() || {};
+        const keys = Object.keys(data);
 
-            db.ref("selectedRecruitment").set(selectedData);
-            db.ref("recruitmentLock").set({lockedAt:Date.now()});
-            db.ref("applications").remove();
+        if(keys.length >= 100){
 
-            lockSystem();
-          }
+          // Random chọn 5 hồ sơ
+          const shuffled = keys.sort(()=>0.5 - Math.random());
+          const selectedKeys = shuffled.slice(0,5);
 
-        });
+          const selectedData = {};
+          selectedKeys.forEach(k=>{
+            selectedData[k] = data[k];
+          });
 
+          db.ref("selectedRecruitment").set(selectedData);
+          db.ref("recruitmentLock").set({
+            lockedAt: Date.now()
+          });
+          db.ref("applications").remove();
+
+          lockSystem();
+        }
+
+        alert("Ứng tuyển thành công!");
       });
 
     });
 
-  }
-
-  function lockSystem(){
-
-    document.getElementById("applyBtn").disabled = true;
-    document.getElementById("status").innerText =
-    "Đã giới hạn lượt ứng tuyển";
-
-    startCountdown();
-  }
-
-  function startCountdown(){
-
-    db.ref("recruitmentLock").once("value", snap=>{
-      if(!snap.exists()) return;
-
-      const endTime = snap.val().lockedAt + TWO_YEARS;
-
-      setInterval(()=>{
-        const diff = endTime - Date.now();
-
-        if(diff <= 0){
-          db.ref("recruitmentLock").remove();
-          document.getElementById("applyBtn").disabled = false;
-          document.getElementById("status").innerText = "";
-          document.getElementById("countdown").innerText = "";
-          return;
-        }
-
-        const days = Math.floor(diff / (1000*60*60*24));
-        document.getElementById("countdown").innerText =
-        "Mở lại sau: " + days + " ngày";
-
-      },1000);
-
-    });
-
-  }
-
-  db.ref("recruitmentLock").once("value", snap=>{
-    if(snap.exists()){
-      lockSystem();
-    }
   });
+
+}
+
+function lockSystem(){
+  applyBtn.disabled = true;
+  statusText.innerText = "Đã giới hạn lượt ứng tuyển";
+  startCountdown();
+}
+
+function startCountdown(){
+
+  db.ref("recruitmentLock").once("value").then(snap=>{
+    if(!snap.exists()) return;
+
+    const endTime = snap.val().lockedAt + TWO_YEARS;
+
+    setInterval(()=>{
+      const diff = endTime - Date.now();
+
+      if(diff <= 0){
+        db.ref("recruitmentLock").remove();
+        applyBtn.disabled = false;
+        statusText.innerText = "";
+        countdownText.innerText = "";
+        return;
+      }
+
+      const days = Math.floor(diff / (1000*60*60*24));
+      countdownText.innerText = "Mở lại sau: " + days + " ngày";
+
+    },1000);
+
+  });
+
+}
+
+// Kiểm tra khi load trang
+db.ref("recruitmentLock").once("value").then(snap=>{
+  if(snap.exists()){
+    lockSystem();
+  }
+});
 
 </script>
 
 </body>
-</html>
+</html>         
