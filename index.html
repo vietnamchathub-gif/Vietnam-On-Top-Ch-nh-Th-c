@@ -62,15 +62,15 @@ border:none;
 
 <header>🇻🇳 Vietnam On Top 🇻🇳</header>
 
-<div id="login">
+<div id="loginBox">
 <h3>Đăng nhập</h3>
 <input id="email" placeholder="Email"><br>
 <input id="password" type="password" placeholder="Mật khẩu"><br>
 <button onclick="register()">Đăng ký</button>
-<button onclick="login()">Đăng nhập</button>
+<button onclick="loginUser()">Đăng nhập</button>
 </div>
 
-<div id="app" style="display:none;padding:10px;">
+<div id="appBox" style="display:none;padding:10px;">
 
 <h3>Chọn Đội</h3>
 <div id="rooms"></div>
@@ -101,8 +101,7 @@ databaseURL: "https://vietnamontop-77401-default-rtdb.firebaseio.com",
 projectId: "vietnamontop-77401",
 storageBucket: "vietnamontop-77401.firebasestorage.app",
 messagingSenderId: "89611948481",
-appId: "1:89611948481:web:0106f02e15f429679d5f40",
-measurementId: "G-5LV99YF5DP"
+appId: "1:89611948481:web:0106f02e15f429679d5f40"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -111,40 +110,40 @@ const db = firebase.database();
 
 let currentRoom = null;
 let messageCount = 0;
-let spamTimer = null;
 
 function register(){
 auth.createUserWithEmailAndPassword(
-email.value,
-password.value
+document.getElementById("email").value,
+document.getElementById("password").value
 ).then(user=>{
 db.ref("users/"+user.user.uid).set({
 created:new Date().toLocaleString(),
 premium:false,
 banned:false
 });
-});
+}).catch(e=>alert(e.message));
 }
 
-function login(){
+function loginUser(){
 auth.signInWithEmailAndPassword(
-email.value,
-password.value
-);
+document.getElementById("email").value,
+document.getElementById("password").value
+).catch(e=>alert(e.message));
 }
 
 auth.onAuthStateChanged(user=>{
 if(user){
+
 db.ref("users/"+user.uid+"/banned").once("value",snap=>{
 if(snap.val()===true){
-alert("Bạn đã vi phạm chính sách của chúng tôi.");
+alert("Bạn đã vi phạm chính sách.");
 auth.signOut();
 return;
 }
 });
 
-login.style.display="none";
-app.style.display="block";
+document.getElementById("loginBox").style.display="none";
+document.getElementById("appBox").style.display="block";
 
 loadProfile(user.uid);
 createRooms();
@@ -154,41 +153,45 @@ createRooms();
 function loadProfile(uid){
 db.ref("users/"+uid).once("value",snap=>{
 let data=snap.val();
-profile.innerHTML=`
+document.getElementById("profile").innerHTML=`
 Tên tài khoản: ${uid}<br>
 Ngày tạo tài khoản: ${data.created}<br>
-Premium [ĐẶC QUYỀN]: ${data.premium ? "**Đã mua**" : "**Chưa mua**"}
+Premium: ${data.premium ? "Đã mua" : "Chưa mua"}
 `;
 });
 }
 
 function createRooms(){
-for(let i=1;i<=500;i++){
+let roomsDiv = document.getElementById("rooms");
+roomsDiv.innerHTML="";
+for(let i=1;i<=50;i++){
 let div=document.createElement("div");
 div.className="room";
 div.innerText="Đội "+i;
 div.onclick=()=>enterRoom("room"+i);
-rooms.appendChild(div);
+roomsDiv.appendChild(div);
 }
 }
 
 function enterRoom(room){
 currentRoom=room;
-roomInside.style.display="block";
-roomTitle.innerText="Đội "+room.replace("room","");
-chatBox.innerHTML="";
-rooms.style.display="none";
+
+document.getElementById("roomInside").style.display="block";
+document.getElementById("roomTitle").innerText="Đội "+room.replace("room","");
+document.getElementById("chatBox").innerHTML="";
+document.getElementById("rooms").style.display="none";
 
 db.ref("rooms/"+room).on("child_added",snap=>{
 let data=snap.val();
+let chatBox=document.getElementById("chatBox");
 chatBox.innerHTML+=`<div>${data.user}: ${data.text}</div>`;
 chatBox.scrollTop=chatBox.scrollHeight;
 });
 }
 
 function back(){
-roomInside.style.display="none";
-rooms.style.display="block";
+document.getElementById("roomInside").style.display="none";
+document.getElementById("rooms").style.display="block";
 }
 
 function send(){
@@ -197,17 +200,17 @@ if(!currentRoom) return;
 messageCount++;
 
 if(messageCount>5){
-alert("[Data] Hệ thống chúng tôi phát hiện lần dùng của bạn rất khả nghi có thể là đang tấn công hệ thống, cho nên bạn sẽ bị đá khỏi phiên sử dụng.");
+alert("Spam detected.");
 auth.signOut();
 return;
 }
 
 db.ref("rooms/"+currentRoom).push({
 user:auth.currentUser.uid,
-text:msg.value
+text:document.getElementById("msg").value
 });
 
-msg.value="";
+document.getElementById("msg").value="";
 }
 </script>
 
