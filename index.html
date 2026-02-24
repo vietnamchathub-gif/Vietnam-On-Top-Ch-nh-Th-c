@@ -22,7 +22,7 @@ header{
 nav{
   display:flex;
   justify-content:space-around;
-  background:rgba(0,0,0,0.3);
+  background:rgba(0,0,0,0.4);
   padding:10px;
 }
 
@@ -30,20 +30,20 @@ nav button{
   background:none;
   border:none;
   color:white;
-  font-size:15px;
+  font-size:14px;
 }
 
 .section{display:none;padding:20px;}
 .active{display:block;}
 
 .card{
-  background:rgba(0,0,0,0.35);
+  background:rgba(0,0,0,0.4);
   padding:15px;
   border-radius:10px;
   margin-bottom:10px;
 }
 
-select,input{
+input,select{
   width:100%;
   padding:8px;
   border-radius:6px;
@@ -72,20 +72,16 @@ button{
   <button onclick="showSection('profile')">👤 Hồ sơ</button>
 </nav>
 
-<!-- HOME -->
 <div id="home" class="section active">
   <h2>🔥 Trang Chủ</h2>
-  <div class="card">
-    Chào mừng đến hệ thống 500 đội Vietnam On Top 😎
-  </div>
+  <div class="card">Chào mừng đến hệ thống 500 đội Vietnam On Top 😎</div>
 </div>
 
-<!-- CONFESS -->
 <div id="confess" class="section">
   <h2>💬 Khu vực Tâm Sự (500 Đội)</h2>
 
   <div class="card">
-    <label>Chọn đội của bạn:</label>
+    <label>Chọn đội:</label>
     <select id="teamSelect"></select>
     <button onclick="joinTeam()">Vào đội</button>
   </div>
@@ -98,9 +94,8 @@ button{
   </div>
 </div>
 
-<!-- PROFILE -->
 <div id="profile" class="section">
-  <h2>👤 Hồ Sơ</h2>
+  <h2>👤 Hồ sơ</h2>
   <div class="card">
     <p><b>Tên tài khoản:</b> <span id="profileName"></span></p>
     <p><b>Ngày tạo tài khoản:</b> <span id="profileDate"></span></p>
@@ -133,23 +128,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ===== TẠO 500 ĐỘI ===== */
-const teamSelect = document.getElementById("teamSelect");
-for(let i=1;i<=500;i++){
-  let option=document.createElement("option");
-  option.value="team"+i;
-  option.text="Đội "+i;
-  teamSelect.appendChild(option);
-}
+/* ===== USER SYSTEM ===== */
 
-let currentTeam=null;
+let userId = localStorage.getItem("userId");
 
-/* ===== TÀI KHOẢN ===== */
-let userId=localStorage.getItem("userId");
 if(!userId){
-  userId="user"+Date.now();
+  userId = "user"+Date.now();
   localStorage.setItem("userId",userId);
-  let name=prompt("Nhập tên tài khoản:");
+
+  let name = prompt("Nhập tên tài khoản:");
   set(ref(db,"users/"+userId),{
     name:name,
     created:new Date().toLocaleString(),
@@ -157,7 +144,7 @@ if(!userId){
   });
 }
 
-/* ===== LOAD PROFILE ===== */
+/* LOAD PROFILE */
 get(ref(db,"users/"+userId)).then(snapshot=>{
   const data=snapshot.val();
   document.getElementById("profileName").innerText=data.name;
@@ -166,7 +153,32 @@ get(ref(db,"users/"+userId)).then(snapshot=>{
     data.premium?"<b style='color:gold'>Đã mua</b>":"Chưa mua";
 });
 
-/* ===== JOIN TEAM ===== */
+/* ===== BAN CHECK ===== */
+
+function showBan(){
+  document.body.innerHTML=`
+    <div style="background:black;color:red;height:100vh;display:flex;align-items:center;justify-content:center;font-size:20px;text-align:center;">
+    Bạn đã vi phạm chính sách của chúng tôi.
+    </div>`;
+}
+
+get(ref(db,"bannedUsers/"+userId)).then(snap=>{
+  if(snap.exists()) showBan();
+});
+
+/* ===== TEAM SYSTEM ===== */
+
+const teamSelect=document.getElementById("teamSelect");
+
+for(let i=1;i<=500;i++){
+  let opt=document.createElement("option");
+  opt.value="team"+i;
+  opt.text="Đội "+i;
+  teamSelect.appendChild(opt);
+}
+
+let currentTeam=null;
+
 window.joinTeam=function(){
   currentTeam=teamSelect.value;
   document.getElementById("chatArea").style.display="block";
@@ -174,19 +186,53 @@ window.joinTeam=function(){
   loadMessages();
 };
 
-/* ===== SEND MESSAGE ===== */
+/* ===== KICK SYSTEM ===== */
+
+let messageTimes=[];
+
+function showKick(){
+  document.body.innerHTML=`
+    <div style="background:black;color:orange;height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;">
+    <div>
+    <b>[Data]</b><br><br>
+    Hệ thống chúng tôi phát hiện lần dùng của bạn rất khả nghi có thể là đang tấn công hệ thống,
+    cho nên bạn sẽ bị đá khỏi phiên sử dụng.<br><br>
+    ❓ Nếu bạn muốn hỗ trợ, hãy truy cập vào kênh hỗ trợ ở trong cộng đồng ứng dụng chúng tôi,
+    nhân viên hỗ trợ sẽ hỗ trợ giải đáp thắc mắc của bạn.
+    </div>
+    </div>`;
+  setTimeout(()=>location.reload(),4000);
+}
+
+/* SEND MESSAGE */
+
 window.sendMessage=function(){
+
+  if(!currentTeam) return alert("Bạn chưa vào đội!");
+
+  const now=Date.now();
+  messageTimes.push(now);
+  messageTimes=messageTimes.filter(t=>now-t<5000);
+
+  if(messageTimes.length>5){
+    showKick();
+    return;
+  }
+
   const input=document.getElementById("chatInput");
   if(!input.value.trim()) return;
+
   push(ref(db,"teams/"+currentTeam),{
     text:input.value,
     user:userId,
-    time:Date.now()
+    time:now
   });
+
   input.value="";
 };
 
-/* ===== LOAD MESSAGE ===== */
+/* LOAD MESSAGE */
+
 function loadMessages(){
   const chatBox=document.getElementById("chatBox");
   onValue(ref(db,"teams/"+currentTeam),(snapshot)=>{
