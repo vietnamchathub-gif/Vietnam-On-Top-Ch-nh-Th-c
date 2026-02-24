@@ -42,17 +42,50 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-db.ref("/").once("value")
+db.ref("/users").once("value")
 .then(snapshot => {
   const data = snapshot.val();
   const list = document.getElementById("list");
 
-  list.innerHTML = "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
+  if(!data){
+    list.innerHTML = "Không có user";
+    return;
+  }
+
+  let html = `
+  <table border="1" cellpadding="8" style="border-collapse:collapse;width:100%;color:white">
+  <tr>
+    <th>UID</th>
+    <th>Name</th>
+    <th>Username</th>
+    <th>Premium</th>
+    <th>Banned</th>
+    <th>Created</th>
+  </tr>
+  `;
+
+  Object.keys(data).forEach(uid=>{
+    const u = data[uid];
+
+    html += `
+    <tr>
+      <td>${uid}</td>
+      <td>${u.name || ""}</td>
+      <td>${u.username || ""}</td>
+      <td>${u.premium}</td>
+      <td>${u.banned}</td>
+      <td>${u.created || ""}</td>
+    </tr>
+    `;
+  });
+
+  html += "</table>";
+  list.innerHTML = html;
 })
 .catch(error=>{
   document.getElementById("list").innerHTML =
   "LỖI: " + error.message;
-}); 
+});
 </script>
 
 </body>
