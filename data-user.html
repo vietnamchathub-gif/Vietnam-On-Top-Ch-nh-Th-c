@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+.<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -42,25 +42,17 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-db.ref("/").on("value", snapshot => {
+db.ref("/").once("value")
+.then(snapshot => {
   const data = snapshot.val();
   const list = document.getElementById("list");
 
-  if(!data){
-    list.innerHTML = "No data found";
-    return;
-  }
-
-  list.innerHTML = "";
-
-  Object.keys(data).forEach(key=>{
-    list.innerHTML += `
-      <div class="user">
-        <pre>${JSON.stringify(data[key], null, 2)}</pre>
-      </div>
-    `;
-  });
-});
+  list.innerHTML = "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
+})
+.catch(error=>{
+  document.getElementById("list").innerHTML =
+  "LỖI: " + error.message;
+}); 
 </script>
 
 </body>
