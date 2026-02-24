@@ -7,33 +7,60 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+body{
+background:black;
+color:white;
+font-family:Arial;
+padding:20px;
+}
+.user{
+background:#111;
+padding:10px;
+margin:10px 0;
+border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🔒 DATA USER SYSTEM</h2>
+<div id="list"></div>
+
+<script>
+
 const firebaseConfig = {
-apiKey: "AIzaSyCvKaa4S4icydrj2JYA5ch0ckGC_mT0bvc",
-authDomain: "vietnamontop-77401.firebaseapp.com",
-databaseURL: "https://vietnamontop-77401-default-rtdb.firebaseio.com",
-projectId: "vietnamontop-77401",
-storageBucket: "vietnamontop-77401.firebasestorage.app",
-messagingSenderId: "89611948481",
-appId: "1:89611948481:web:0106f02e15f429679d5f40"
+  apiKey: "AIzaSyCvKaa4S4icydrj2JYA5ch0ckGG_mTObvc",
+  authDomain: "vietnamontop-77401.firebaseapp.com",
+  databaseURL: "https://vietnamontop-77401-default-rtdb.firebaseio.com",
+  projectId: "vietnamontop-77401",
+  storageBucket: "vietnamontop-77401.appspot.com",
+  messagingSenderId: "89611948481",
+  appId: "1:89611948481:web:0106f02e15f429679d5f40"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+const list = document.getElementById("list");
+
 db.ref("users").on("value", snap=>{
-list.innerHTML="";
-snap.forEach(child=>{
-let data = child.val();
-list.innerHTML += `
-<div class="user">
-UID: ${child.key}<br>
-Username: ${data.username || "Chưa đặt"}<br>
-Premium: ${data.premium}<br>
-Banned: ${data.banned}
-</div>
-`;
+  list.innerHTML="";
+  snap.forEach(child=>{
+    let data = child.val();
+    list.innerHTML += `
+      <div class="user">
+        UID: ${child.key}<br>
+        Username: ${data.username || "Chưa đặt"}<br>
+        Premium: ${data.premium}<br>
+        Banned: ${data.banned}
+      </div>
+    `;
+  });
 });
-});
+
 </script>
 
 </body>
