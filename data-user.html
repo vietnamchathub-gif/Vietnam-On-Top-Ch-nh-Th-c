@@ -68,18 +68,20 @@ db.ref("users").once("value", function(snapshot) {
     const u = data[uid];
 
     html += `
-    <tr>
-      <td>${uid}</td>
-      <td>${u.name || ""}</td>
-      <td>${u.username || ""}</td>
-      <td>${u.premium || false}</td>
-      <td>
-  ${u.banned || false}
-  ${u.banned ? `<button onclick="unbanUser('${uid}')">Mở khóa</button>` : ""}
-</td>
-      <td>${u.created || ""}</td>
-    </tr>
-    `;
+<tr>
+  <td>${uid}</td>
+  <td>${u.name || ""}</td>
+  <td>${u.username || ""}</td>
+  <td>${u.premium || false}</td>
+
+  <td>
+    ${u.banned || false}
+    ${u.banned ? `<button onclick="unbanUser('${uid}')">Mở khóa</button>` : ""}
+  </td>
+
+  <td>${u.created || ""}</td>
+</tr>
+`;
   });
 
   html += "</table>";
