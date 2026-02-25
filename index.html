@@ -65,7 +65,7 @@ button{cursor:pointer}
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, push, onValue, set, get, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyCvKaa4S4icydrj2JYA5ch0ckGC_mT0bvc",
@@ -85,10 +85,19 @@ const db = getDatabase();
 
 let currentTeam = null;
 
-/* AUTH */
+/* ================= AUTH ================= */
 
 window.register = () => {
 createUserWithEmailAndPassword(auth,email.value,password.value)
+.then(cred=>{
+// 🔥 THÊM PHẦN USER SYSTEM
+set(ref(db,"users/"+cred.user.uid),{
+email:cred.user.email,
+premium:false,
+banned:false,
+createdAt:Date.now()
+});
+})
 .catch(e=>alert(e.message));
 };
 
@@ -101,6 +110,16 @@ window.logout = () => signOut(auth);
 
 onAuthStateChanged(auth,user=>{
 if(user){
+
+// 🔥 KIỂM TRA BỊ BAN
+get(ref(db,"users/"+user.uid)).then(snap=>{
+if(snap.exists() && snap.val().banned){
+alert("Tài khoản đã bị BAN!");
+signOut(auth);
+return;
+}
+});
+
 authSection.style.display="none";
 appSection.style.display="block";
 
@@ -115,7 +134,7 @@ appSection.style.display="none";
 }
 });
 
-/* TEAM */
+/* ================= TEAM ================= */
 
 function loadTeams(){
 teamList.innerHTML="";
@@ -157,18 +176,22 @@ text:msgInput.value
 msgInput.value="";
 };
 
-/* ADMIN */
+/* ================= ADMIN ================= */
 
 window.banUser = ()=>{
 let uid = prompt("Nhập UID người cần BAN:");
 if(!uid) return;
+
+set(ref(db,"users/"+uid+"/banned"),true);
 alert("Đã BAN UID: "+uid);
 };
 
 window.kickUser = ()=>{
 let uid = prompt("Nhập UID người cần KICK:");
 if(!uid) return;
-alert("Đã KICK UID: "+uid);
+
+remove(ref(db,"users/"+uid));
+alert("Đã XÓA USER: "+uid);
 };
 
 </script>
