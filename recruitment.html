@@ -1,204 +1,212 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tuyển Dụng - Vietnam On Top</title>
 
-<style>
-body{
-    margin:0;
-    font-family:Arial, sans-serif;
-    background:#000;
-    color:white;
-}
-
-header{
-    background:#000;
-    padding:20px;
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
-    position:relative;
-    border-bottom:1px solid #222;
-}
-
-.menu-btn{
-    position:absolute;
-    right:20px;
-    top:25px;
-    cursor:pointer;
-    font-size:26px;
-}
-
-.dropdown{
-    display:none;
-    position:absolute;
-    right:20px;
-    top:70px;
-    background:#111;
-    padding:10px;
-    border-radius:8px;
-}
-
-.dropdown a{
-    color:white;
-    text-decoration:none;
-    display:block;
-    padding:5px 10px;
-}
-
-.container{
-    display:flex;
-    justify-content:center;
-    margin-top:50px;
-}
-
-.form-box{
-    background:#111;
-    padding:40px;
-    width:500px;
-    border-radius:15px;
-    box-shadow:0 0 20px rgba(0,255,255,0.2);
-}
-
-.form-box h2{
-    text-align:center;
-}
-
-.form-box input,
-.form-box textarea{
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    background:#222;
-    border:none;
-    border-radius:8px;
-    color:white;
-}
-
-.form-box button{
-    width:100%;
-    padding:15px;
-    background:#00bcd4;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
-    cursor:pointer;
-}
-
-#policy{
-    margin:60px auto;
-    width:80%;
-    background:#111;
-    padding:30px;
-    border-radius:15px;
-}
-.admin-panel{
-    margin:50px auto;
-    width:80%;
-}
-.application-item{
-    background:#111;
-    padding:20px;
-    margin-bottom:15px;
-    border-radius:10px;
-}
-.delete-btn{
-    background:red;
-    border:none;
-    padding:8px 12px;
-    color:white;
-    border-radius:5px;
-    cursor:pointer;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-TRANG TUYỂN DỤNG NHÂN SỰ CHÍNH THỨC CỦA ỨNG DỤNG VIETNAM ON TOP
-<div class="menu-btn" onclick="toggleMenu()">☰</div>
-
-<div class="dropdown" id="dropdown">
-<a href="#policy">Chính Sách Tuyển Dụng</a>
-</div>
-</header>
-
-<!-- FORM -->
-<div class="container" id="formSection">
-<div class="form-box">
-<h2>Nộp Đơn Tuyển Dụng</h2>
-<input type="text" id="name" placeholder="Họ tên">
-<input type="number" id="age" placeholder="Tuổi">
-<input type="text" id="contact" placeholder="Liên hệ">
-<textarea id="experience" placeholder="Kinh nghiệm"></textarea>
-<textarea id="reason" placeholder="Lý do ứng tuyển"></textarea>
-<button onclick="submitForm()">Gửi đơn</button>
-</div>
-</div>
-
-<!-- ADMIN PANEL -->
-<div class="admin-panel" id="adminPanel" style="display:none;">
-<h2>QUẢN LÝ HỒ SƠ ỨNG TUYỂN</h2>
-<div id="applicationList"></div>
-</div>
-
-<!-- CHÍNH SÁCH -->
-<div id="policy">
-<h2>Chính Sách Tuyển Dụng</h2>
-<ul>
-<li>Ứng viên phải cung cấp thông tin chính xác và trung thực.</li>
-<li>Không chấp nhận hành vi giả mạo danh tính hoặc gian lận.</li>
-<li>Ban quản trị có quyền từ chối hồ sơ không đạt yêu cầu.</li>
-<li>Mọi thông tin sẽ được bảo mật.</li>
-</ul>
-</div>
-
-<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f0f0f;
+  color:white;
+}
+
+/* MENU */
+#menuBtn{
+  position:fixed;
+  top:15px;
+  left:15px;
+  font-size:28px;
+  cursor:pointer;
+  z-index:1001;
+}
+
+#sidebar{
+  position:fixed;
+  left:-260px;
+  top:0;
+  width:260px;
+  height:100%;
+  background:#111;
+  padding:20px;
+  transition:0.3s;
+  z-index:1000;
+}
+
+#sidebar a{
+  display:block;
+  color:white;
+  text-decoration:none;
+  margin:15px 0;
+}
+
+#overlay{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  z-index:999;
+}
+
+/* CONTAINER */
+.container{
+  max-width:1000px;
+  margin:auto;
+  padding:60px 20px;
+}
+
+input,textarea{
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:6px;
+  border:none;
+}
+
+button{
+  padding:8px 14px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.submitBtn{ background:cyan; }
+.approveBtn{ background:green; color:white; }
+
+.statBox{
+  flex:1;
+  background:#1b1b1b;
+  padding:15px;
+  border-radius:10px;
+  text-align:center;
+}
+
+.dashboardRow{
+  display:flex;
+  gap:15px;
+  margin:20px 0;
+}
+
+.card{
+  background:#1b1b1b;
+  padding:15px;
+  margin-bottom:15px;
+  border-radius:10px;
+  border-left:4px solid cyan;
+}
+
+/* POLICY */
+#policyModal{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:80%;
+  max-height:80%;
+  overflow-y:auto;
+  background:#1b1b1b;
+  padding:25px;
+  border-radius:10px;
+  display:none;
+  z-index:2000;
+}
+</style>
+</head>
+<body>
+
+<div id="menuBtn" onclick="toggleMenu()">☰</div>
+
+<div id="sidebar">
+  <h3>Vietnam On Top</h3>
+  <a href="/">Trang Chủ</a>
+  <a href="#" onclick="openPolicy()">Chính Sách Tuyển Dụng</a>
+</div>
+
+<div id="overlay" onclick="toggleMenu()"></div>
+
+<div class="container">
+
+<h2>TRANG TUYỂN DỤNG NHÂN SỰ CHÍNH THỨC</h2>
+
+<!-- FORM -->
+<div id="formSection">
+  <input type="text" id="name" placeholder="Họ và tên">
+  <input type="email" id="email" placeholder="Email">
+  <textarea id="reason" placeholder="Lý do ứng tuyển"></textarea>
+  <button class="submitBtn" onclick="submitApplication()">Gửi Hồ Sơ</button>
+</div>
+
+<!-- ADMIN -->
+<div id="adminPanel" style="display:none;">
+  <h2>📊 Dashboard Quản Lý</h2>
+
+  <div class="dashboardRow">
+    <div class="statBox">
+      <h3 id="totalCount">0</h3>
+      <p>Tổng hồ sơ</p>
+    </div>
+    <div class="statBox">
+      <h3 id="approvedCount">0</h3>
+      <p>Đã duyệt</p>
+    </div>
+    <div class="statBox">
+      <h3 id="pendingCount">0</h3>
+      <p>Chờ duyệt</p>
+    </div>
+  </div>
+
+  <div id="applicationsList"></div>
+</div>
+
+</div>
+
+<!-- POLICY MODAL -->
+<div id="policyModal">
+<h2>CHÍNH SÁCH TUYỂN DỤNG</h2>
+
+<p><b>1. Tiêu chuẩn ứng viên</b></p>
+<p>Ứng viên phải cung cấp thông tin chính xác, trung thực và đầy đủ. Bất kỳ hành vi gian lận nào đều có thể dẫn đến loại bỏ ngay lập tức.</p>
+
+<p><b>2. Hành vi chuyên nghiệp</b></p>
+<p>Thành viên phải duy trì thái độ tôn trọng, không gây xung đột, không phát ngôn tiêu cực ảnh hưởng đến cộng đồng.</p>
+
+<p><b>3. Bảo mật thông tin</b></p>
+<p>Thông tin nội bộ và dữ liệu người dùng phải được bảo mật tuyệt đối. Nghiêm cấm chia sẻ ra bên ngoài.</p>
+
+<p><b>4. Trách nhiệm & Cam kết</b></p>
+<p>Thành viên được tuyển chọn phải cam kết đóng góp tích cực và tuân thủ mọi quy định nội bộ.</p>
+
+<p><b>5. Quyền quyết định</b></p>
+<p>Vietnam On Top có toàn quyền chấp thuận hoặc từ chối bất kỳ hồ sơ nào mà không bắt buộc phải cung cấp lý do chi tiết.</p>
+
+<p><b>6. Kỷ luật</b></p>
+<p>Vi phạm quy định có thể dẫn đến cảnh cáo, tạm đình chỉ hoặc chấm dứt quyền tham gia.</p>
+
+<br>
+<button onclick="closePolicy()">Đóng</button>
+</div>
+
 <script>
-// ==== CONFIG CỦA MÀY ====
-var firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyCvKaa4S4icydrj2JYA5ch0ckGC_mT0bvc",
   authDomain: "vietnamontop-77401.firebaseapp.com",
-  projectId: "vietnamontop-77401",
+  projectId: "vietnamontop-77401"
 };
-firebase.initializeApp(firebaseConfig);
 
+firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const ADMIN_UID = "o4WlbBoDRbPOTvbg69juPM7Iq0s1";
 
-// MENU
-function toggleMenu(){
-  const d = document.getElementById("dropdown");
-  d.style.display = d.style.display === "block" ? "none" : "block";
-}
-
-// SUBMIT
-function submitForm(){
-  const name = document.getElementById("name").value;
-  const age = document.getElementById("age").value;
-  const contact = document.getElementById("contact").value;
-  const experience = document.getElementById("experience").value;
-  const reason = document.getElementById("reason").value;
-
-  db.collection("applications").add({
-    name, age, contact, experience, reason,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  alert("Đã gửi đơn!");
-}
-
-// CHECK LOGIN & ADMIN
 firebase.auth().onAuthStateChanged(user=>{
   if(!user){
-    alert("Vui lòng đăng nhập.");
     window.location.href="/";
     return;
   }
@@ -210,30 +218,84 @@ firebase.auth().onAuthStateChanged(user=>{
   }
 });
 
-// LOAD HỒ SƠ
-function loadApplications(){
-  db.collection("applications").orderBy("createdAt","desc")
-  .onSnapshot(snapshot=>{
-    const list = document.getElementById("applicationList");
-    list.innerHTML="";
-    snapshot.forEach(doc=>{
-      const data = doc.data();
-      list.innerHTML += `
-        <div class="application-item">
-          <p><b>Họ tên:</b> ${data.name}</p>
-          <p><b>Tuổi:</b> ${data.age}</p>
-          <p><b>Liên hệ:</b> ${data.contact}</p>
-          <p><b>Kinh nghiệm:</b> ${data.experience}</p>
-          <p><b>Lý do:</b> ${data.reason}</p>
-          <button class="delete-btn" onclick="deleteApp('${doc.id}')">Xóa</button>
-        </div>
-      `;
-    });
+function submitApplication(){
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const reason = document.getElementById("reason").value;
+
+  if(!name || !email || !reason){
+    alert("Vui lòng nhập đầy đủ thông tin.");
+    return;
+  }
+
+  db.collection("applications").add({
+    name:name,
+    email:email,
+    reason:reason,
+    status:"pending",
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
+    alert("Gửi hồ sơ thành công!");
   });
 }
 
-function deleteApp(id){
-  db.collection("applications").doc(id).delete();
+function loadApplications(){
+  db.collection("applications")
+  .orderBy("createdAt","desc")
+  .onSnapshot(snapshot=>{
+
+    const list = document.getElementById("applicationsList");
+    list.innerHTML="";
+
+    let total=0, approved=0, pending=0;
+
+    snapshot.forEach(doc=>{
+      total++;
+      const data = doc.data();
+      if(data.status==="approved"){ approved++; } else { pending++; }
+
+      list.innerHTML += `
+        <div class="card">
+          <b>${data.name}</b><br>
+          Email: ${data.email}<br>
+          Lý do: ${data.reason}<br>
+          Trạng thái: ${data.status}<br><br>
+          <button class="approveBtn" onclick="approve('${doc.id}')">Duyệt</button>
+        </div>
+      `;
+    });
+
+    document.getElementById("totalCount").innerText=total;
+    document.getElementById("approvedCount").innerText=approved;
+    document.getElementById("pendingCount").innerText=pending;
+  });
+}
+
+function approve(id){
+  db.collection("applications").doc(id).update({status:"approved"});
+}
+
+/* MENU */
+function toggleMenu(){
+  const sidebar=document.getElementById("sidebar");
+  const overlay=document.getElementById("overlay");
+
+  if(sidebar.style.left==="0px"){
+    sidebar.style.left="-260px";
+    overlay.style.display="none";
+  }else{
+    sidebar.style.left="0px";
+    overlay.style.display="block";
+  }
+}
+
+function openPolicy(){
+  document.getElementById("policyModal").style.display="block";
+  toggleMenu();
+}
+
+function closePolicy(){
+  document.getElementById("policyModal").style.display="none";
 }
 </script>
 
