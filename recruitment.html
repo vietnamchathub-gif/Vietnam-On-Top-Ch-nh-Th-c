@@ -11,13 +11,24 @@
 
 <h2>Nộp Đơn Tuyển Dụng</h2>
 
-<input id="name" placeholder="Họ tên"><br><br>
-<input id="age" placeholder="Tuổi"><br><br>
-<input id="contact" placeholder="Liên hệ"><br><br>
-<input id="exp" placeholder="Kinh nghiệm"><br><br>
-<textarea id="reason" placeholder="Lý do ứng tuyển"></textarea><br><br>
+<div id="userForm">
 
-<button onclick="submitApplication()">Gửi đơn</button>
+  <input id="name" placeholder="Họ tên"><br><br>
+  <input id="age" placeholder="Tuổi"><br><br>
+  <input id="contact" placeholder="Liên hệ"><br><br>
+  <input id="exp" placeholder="Kinh nghiệm"><br><br>
+  <textarea id="reason" placeholder="Lý do ứng tuyển"></textarea><br><br>
+
+  <button onclick="submitApplication()">Gửi đơn</button>
+
+</div>
+
+<hr>
+
+<div id="adminPanel" style="display:none;">
+  <h2>Quản Lý Hồ Sơ (Admin)</h2>
+  <div id="list"></div>
+</div>
 
 <script>
 const firebaseConfig = {
@@ -31,6 +42,25 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
+const ADMIN_UID = "o4WlbBoDRbPOTvbg69juPM7Iq0s1";
+
+/* =========================
+   KIỂM TRA ADMIN
+========================= */
+auth.onAuthStateChanged(user => {
+
+  if (!user) return;
+
+  if(user.uid === ADMIN_UID){
+    document.getElementById("adminPanel").style.display = "block";
+    loadApplications();
+  }
+
+});
+
+/* =========================
+   USER GỬI ĐƠN
+========================= */
 function submitApplication() {
 
   const user = auth.currentUser;
@@ -39,19 +69,96 @@ function submitApplication() {
     return;
   }
 
-  db.ref("applications").push({
-    uid: user.uid,
-    name: document.getElementById("name").value,
-    age: document.getElementById("age").value,
-    contact: document.getElementById("contact").value,
-    exp: document.getElementById("exp").value,
-    reason: document.getElementById("reason").value,
-    status: "pending",
-    createdAt: Date.now()
-  });
+  db.ref("applications")
+    .orderByChild("uid")
+    .equalTo(user.uid)
+    .once("value")
+    .then(snapshot => {
 
-  alert("Đã gửi đơn thành công");
+      let hasPending = false;
+
+      snapshot.forEach(child => {
+        if(child.val().status === "pending"){
+          hasPending = true;
+        }
+      });
+
+      if(hasPending){
+        alert("Bạn đã có đơn đang chờ duyệt.");
+        return;
+      }
+
+      db.ref("applications").push({
+        uid: user.uid,
+        name: document.getElementById("name").value,
+        age: document.getElementById("age").value,
+        contact: document.getElementById("contact").value,
+        exp: document.getElementById("exp").value,
+        reason: document.getElementById("reason").value,
+        status: "pending",
+        createdAt: Date.now()
+      });
+
+      alert("Đã gửi đơn thành công");
+
+    });
 }
+
+/* =========================
+   ADMIN LOAD DANH SÁCH
+========================= */
+function loadApplications() {
+
+  db.ref("applications").on("value", snapshot => {
+
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    snapshot.forEach(child => {
+
+      const data = child.val();
+      const key = child.key;
+
+      list.innerHTML += `
+        <div style="border:1px solid black;padding:10px;margin-bottom:10px;">
+          <b>${data.name}</b><br>
+          Tuổi: ${data.age}<br>
+          Liên hệ: ${data.contact}<br>
+          Kinh nghiệm: ${data.exp}<br>
+          Lý do: ${data.reason}<br><br>
+          <button onclick="approve('${key}', '${data.uid}')">Duyệt</button>
+          <button onclick="removeApp('${key}', '${data.uid}')">Xoá</button>
+        </div>
+      `;
+    });
+
+  });
+}
+
+/* =========================
+   ADMIN DUYỆT
+========================= */
+function approve(key, uid) {
+
+  db.ref("staffList/" + uid).set(true);
+
+  db.ref("applications/" + key).remove();
+
+  alert("Đã duyệt & cấp ⚙️");
+}
+
+/* =========================
+   ADMIN XOÁ
+========================= */
+function removeApp(key, uid) {
+
+  db.ref("staffList/" + uid).remove();
+
+  db.ref("applications/" + key).remove();
+
+  alert("Đã xoá hồ sơ");
+}
+
 </script>
 
 </body>
