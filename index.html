@@ -1,191 +1,182 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vietnam On Top</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#0b1f3a;color:white;text-align:center}
-.team{background:#1e3c72;margin:8px;padding:10px;border-radius:6px;cursor:pointer}
-.chat-box{margin-top:20px}
-#messages{height:200px;overflow-y:auto;background:#111;padding:10px;border-radius:8px}
-input,button{padding:8px;margin:5px}
-.admin-panel{margin-top:30px;background:#111;padding:20px;border-radius:10px}
-.premium-box{margin-top:30px;background:#111;padding:20px;border-radius:10px}
+body{
+  background:#0f2747;
+  color:white;
+  font-family:Arial;
+  margin:0;
+  text-align:center;
+}
+
+.header{
+  background:#0c1f38;
+  padding:15px;
+  font-size:20px;
+  font-weight:bold;
+}
+
+.team{
+  background:#274a7d;
+  margin:8px 10px;
+  padding:12px;
+  border-radius:6px;
+}
+
+.box{
+  background:black;
+  padding:20px;
+  margin:20px 10px;
+  border-radius:8px;
+}
+
+.admin{
+  display:none;
+}
+
+input{
+  padding:6px;
+  margin:5px;
+}
+
+button{
+  padding:6px 12px;
+  margin:5px;
+  cursor:pointer;
+}
 </style>
 </head>
-
 <body>
 
-<h2>🇻🇳 Vietnam On Top 🇻🇳</h2>
+<div class="header">🇻🇳 Vietnam On Top 🇻🇳</div>
 
+<div id="userInfo">Chưa đăng nhập</div>
+
+<!-- LOGIN / REGISTER -->
+<div class="box">
+  <h3>Đăng nhập / Đăng ký</h3>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="register()">Đăng ký</button>
+  <button onclick="login()">Đăng nhập</button>
+  <button onclick="loginGoogle()">Login Google</button>
+  <button onclick="logout()">Đăng xuất</button>
+</div>
+
+<!-- TEAM LIST -->
 <div id="teamList"></div>
 
-<div class="chat-box" id="chatBox" style="display:none;">
-  <h3 id="teamTitle"></h3>
-  <div id="messages"></div>
-  <input type="text" id="msgInput" placeholder="Nhập tin nhắn">
-  <button onclick="sendMessage()">Gửi</button>
+<!-- PREMIUM -->
+<div class="box">
+  ⭐ <b>Premium</b><br><br>
+  49.000đ / 30 ngày<br>
+  99.000đ / 90 ngày<br>
+  199.000đ / 365 ngày<br><br>
+  <button>Mua Premium</button>
 </div>
 
-<div class="premium-box">
-  <h3>⭐ Premium</h3>
-  <p>49.000đ / 30 ngày</p>
-  <p>99.000đ / 90 ngày</p>
-  <p>199.000đ / 365 ngày</p>
-  <button onclick="buyPremium()">Mua Premium</button>
-  <div id="premiumNotice" style="display:none;border:2px solid red;color:red;padding:10px;margin-top:10px">
-    Premium [ĐẶC QUYỀN] này chưa được nhà phát hành bán trên ứng dụng.
-  </div>
+<!-- ADMIN PANEL -->
+<div class="box admin" id="adminPanel">
+  🛡 <b>ADMIN PANEL</b><br><br>
+  <input type="text" id="targetUID" placeholder="Nhập ID người cần xử lí"><br>
+  <button onclick="banUser()">Banned</button>
+  <button onclick="kickUser()">Kick</button>
 </div>
 
-<div class="admin-panel" id="adminPanel" style="display:none;">
-  <h3>🛡 ADMIN PANEL</h3>
-  <input type="text" id="targetUID" placeholder="Nhập UID">
-  <br>
-  <button onclick="banUser()">BAN</button>
-  <button onclick="kickUser()">KICK</button>
-</div>
+<!-- FIREBASE v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, remove, get } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { 
-  getAuth, 
-  onAuthStateChanged, 
-  signOut, 
-  sendEmailVerification,
-  sendPasswordResetEmail
-}
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+<script>
 
-const firebaseConfig = {
-  apiKey:"AIzaSyCvKaa4S4icydrj2JYA5ch0ckGC_mT0bvc",
-  authDomain:"vietnamontop-77401.firebaseapp.com",
-  databaseURL:"https://vietnamontop-77401-default-rtdb.firebaseio.com",
-  projectId:"vietnamontop-77401",
-  appId:"1:89611948481:web:0106f02e15f429679d5f40"
+// 🔥 CONFIG
+var firebaseConfig = {
+  apiKey: "AIzaSyCvKaa4S4icydrj2JYA5ch0ckGC_mT0bvc",
+  authDomain: "vietnamontop-77401.firebaseapp.com",
+  databaseURL: "https://vietnamontop-77401-default-rtdb.firebaseio.com",
+  projectId: "vietnamontop-77401",
+  storageBucket: "vietnamontop-77401.firebasestorage.app",
+  messagingSenderId: "89611948481",
+  appId: "1:89611948481:web:0106f02e15f429679d5f40"
 };
+firebase.initializeApp(firebaseConfig);
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
+const ADMIN_UID = "o4WlbBoDRbPOTvbg69juPM7Iq0s1"; 
 
-const ADMIN_UID = "o4WlbBoDRbPOTvbg69juPM7Iq0s1";
-
-let currentTeam = "";
-let currentUser = null;
-
-/* ====== TẠO 20 ĐỘI ====== */
-const teamList = document.getElementById("teamList");
+// Tạo team list
 for(let i=1;i<=20;i++){
-  const div = document.createElement("div");
-  div.className="team";
-  div.innerText="Đội "+i;
-  div.onclick=()=>openTeam("team"+i);
-  teamList.appendChild(div);
+  document.getElementById("teamList").innerHTML +=
+  `<div class="team">Đội ${i}</div>`;
 }
 
-/* ====== LOGIN CHECK + EMAIL VERIFY ====== */
-onAuthStateChanged(auth, async (user)=>{
+// REGISTER
+function register(){
+  let email = emailInput();
+  let pass = passInput();
+  firebase.auth().createUserWithEmailAndPassword(email,pass)
+  .then(()=>alert("Đăng ký thành công"))
+  .catch(e=>alert(e.message));
+}
 
-   if(!user){
-      console.log("Chưa đăng nhập");
-      return;
-   }
+// LOGIN
+function login(){
+  let email = emailInput();
+  let pass = passInput();
+  firebase.auth().signInWithEmailAndPassword(email,pass)
+  .catch(e=>alert(e.message));
+}
 
-   await user.reload(); // cập nhật trạng thái email
+// GOOGLE LOGIN
+function loginGoogle(){
+  var provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider);
+}
 
-   if(!user.emailVerified){
-      alert("Email chưa xác minh! Vui lòng kiểm tra Gmail.");
-      await sendEmailVerification(user);
-      await signOut(auth);
-      return;
-   }
+// LOGOUT
+function logout(){
+  firebase.auth().signOut();
+}
 
-   console.log("Đăng nhập UID:", user.uid);
+// AUTH CHECK
+firebase.auth().onAuthStateChanged(function(user){
+  if(user){
+    document.getElementById("userInfo").innerHTML =
+      "Đang đăng nhập: " + user.email + "<br>UID: " + user.uid;
 
-   currentUser = user;
-
-   const userRef = ref(db,"users/"+user.uid);
-
-   get(userRef).then((snap)=>{
-
-      if(!snap.exists()){
-         set(userRef,{
-            email:user.email,
-            premium:false,
-            banned:false,
-            createdAt:Date.now()
-         });
-      }else{
-         if(snap.val().banned){
-            alert("Tài khoản bị BAN");
-            signOut(auth);
-            return;
-         }
-      }
-
-   }).catch(err=>{
-      console.error("Lỗi đọc user:",err);
-   });
-
-   if(user.uid===ADMIN_UID){
+    if(user.uid === ADMIN_UID){
       document.getElementById("adminPanel").style.display="block";
-   }
+    } else {
+      document.getElementById("adminPanel").style.display="none";
+    }
 
+  } else {
+    document.getElementById("userInfo").innerHTML="Chưa đăng nhập";
+    document.getElementById("adminPanel").style.display="none";
+  }
 });
 
-/* ====== CHAT ====== */
-function openTeam(team){
-  currentTeam=team;
-  document.getElementById("chatBox").style.display="block";
-  document.getElementById("teamTitle").innerText="Phòng "+team;
-
-  const msgRef = ref(db,"messages/"+team);
-  onValue(msgRef,(snap)=>{
-    const messagesDiv=document.getElementById("messages");
-    messagesDiv.innerHTML="";
-    snap.forEach(child=>{
-      const p=document.createElement("p");
-      p.innerText=child.val().email+": "+child.val().text;
-      messagesDiv.appendChild(p);
-    });
-  });
+// ADMIN FUNCTIONS
+function banUser(){
+  let uid = document.getElementById("targetUID").value;
+  firebase.database().ref("banned/"+uid).set(true);
+  alert("Đã ban");
 }
 
-window.sendMessage=function(){
-  const text=document.getElementById("msgInput").value;
-  if(!text||!currentTeam) return;
-  push(ref(db,"messages/"+currentTeam),{
-    email:currentUser.email,
-    text:text,
-    time:Date.now()
-  });
-  document.getElementById("msgInput").value="";
+function kickUser(){
+  let uid = document.getElementById("targetUID").value;
+  firebase.database().ref("kick/"+uid).set(Date.now());
+  alert("Đã kick");
 }
 
-/* ====== PREMIUM ====== */
-window.buyPremium=function(){
-  document.getElementById("premiumNotice").style.display="block";
-}
+// helpers
+function emailInput(){ return document.getElementById("email").value; }
+function passInput(){ return document.getElementById("password").value; }
 
-/* ====== ADMIN ====== */
-window.banUser=function(){
-  const uid=document.getElementById("targetUID").value;
-  if(!uid) return alert("Nhập UID");
-  set(ref(db,"users/"+uid+"/banned"),true);
-  alert("Đã BAN");
-}
-
-window.kickUser=function(){
-  const uid=document.getElementById("targetUID").value;
-  if(!uid) return alert("Nhập UID");
-  remove(ref(db,"users/"+uid));
-  alert("Đã KICK");
-}
 </script>
 
 </body>
