@@ -52,7 +52,8 @@ input,button{padding:8px;margin:5px}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, set, push, onValue, remove, get } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, sendEmailVerification } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey:"AIzaSyCvKaa4S4icydrj2JYA5ch0ckGC_mT0bvc",
@@ -81,11 +82,20 @@ for(let i=1;i<=20;i++){
   teamList.appendChild(div);
 }
 
-/* ====== LOGIN CHECK ====== */
-onAuthStateChanged(auth,(user)=>{
+/* ====== LOGIN CHECK + EMAIL VERIFY ====== */
+onAuthStateChanged(auth, async (user)=>{
 
    if(!user){
       console.log("Chưa đăng nhập");
+      return;
+   }
+
+   await user.reload(); // cập nhật trạng thái email
+
+   if(!user.emailVerified){
+      alert("Email chưa xác minh! Vui lòng kiểm tra Gmail.");
+      await sendEmailVerification(user);
+      await signOut(auth);
       return;
    }
 
