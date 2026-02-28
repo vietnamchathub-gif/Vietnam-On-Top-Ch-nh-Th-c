@@ -127,6 +127,22 @@ window.register = async function(){
   }
 
 }
+ window.login = async function(){
+
+  const emailInput = document.querySelector('input[type="email"]');
+  const passwordInput = document.querySelector('input[type="password"]');
+
+  const email = emailInput.value;
+  const password = passwordInput.value;
+
+  try{
+    await signInWithEmailAndPassword(auth,email,password);
+    alert("Đăng nhập thành công");
+  }catch(error){
+    alert(error.message);
+  }
+
+  }
 
 window.logout = async function(){
   await signOut(auth);
@@ -136,13 +152,6 @@ onAuthStateChanged(auth, async(user)=>{
   if(user){
     authDiv.style.display="none";
     mainDiv.style.display="block";
-
-    await set(ref(db,"users/"+user.uid),{
-      email:user.email,
-      team:"Red",
-      banned:false,
-      role:user.uid===ADMIN_UID?"admin":"user"
-    });
 
     if(user.uid===ADMIN_UID){
       adminPanel.style.display="block";
