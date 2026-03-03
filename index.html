@@ -31,18 +31,47 @@ display:flex;align-items:center
 }
 #menuBtn{font-size:22px;cursor:pointer;margin-right:10px}
 #sideMenu{
-position:fixed;left:-300px;top:0;
-width:300px;height:100%;
-background:#1a1a1a;padding:20px;
-overflow:auto;transition:0.3s
+position:fixed;
+right:-300px;
+top:0;
+width:300px;
+height:100%;
+background:#1a1a1a;
+padding:20px;
+overflow:auto;
+transition:0.3s;
+z-index:999;
 }
 #chatBox{
 height:250px;overflow:auto;
 background:#1c1c1c;padding:10px;
 margin-top:10px
 }
-.verified{color:#00c3ff;font-weight:bold}
+.verifiedBadge{
+display:inline-flex;
+align-items:center;
+margin-left:6px;
+vertical-align:middle;
+}
+.verifiedBadge svg{
+width:18px;
+height:18px;
+}
 .premium{color:gold}
+.cBadge{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+width:22px;
+height:22px;
+border-radius:50%;
+background:#ff6a00;
+color:white;
+font-weight:bold;
+font-size:13px;
+margin-left:6px;
+box-shadow:0 0 8px #ff6a00;
+}
 </style>
 </head>
 <body>
@@ -60,8 +89,8 @@ VietnamOnTop có quyền chỉnh sửa, cập nhật chính sách bất cứ lú
 </div>
 
 <div id="topBar">
+<h2 style="flex:1">VietnamOnTop [BẢN CHÍNH THỨC]</h2>
 <div id="menuBtn">☰</div>
-<h2>VietnamOnTop [BẢN CHÍNH THỨC]</h2>
 </div>
 <p style="text-align:center">
 Developer/Management: Vietnam Chat Hub<br>
@@ -112,7 +141,7 @@ Cộng Đồng Ứng Dụng Trên Discord ❗️
 </select>
 <button onclick="banUser()">Ban</button>
 <button onclick="unbanUser()">Unban</button>
-<input type="text" id="banWord" placeholder="Từ cấm auto ban">
+<input type="text" id="banWord" placeholder="hack">
 <button onclick="setAutoBan()">Set Auto Ban</button>
 </div>
 </div>
@@ -129,7 +158,6 @@ import {
 getDatabase,ref,set,get,update,push,onValue
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-/* GIỮ NGUYÊN CONFIG CỦA MÀY */
 const firebaseConfig={
 apiKey:"AIzaSyCvKaa4S4icydrj2JYA5ch0ckGC_mT0bvc",
 authDomain:"vietnamontop-77401.firebaseapp.com",
@@ -153,9 +181,9 @@ o.text="Team "+i;
 teamSelect.add(o);
 }
 
-document.getElementById("menuBtn").onclick=()=>{
-let menu=document.getElementById("sideMenu");
-menu.style.left=menu.style.left==="0px"?"-300px":"0px";
+document.getElementById("menuBtn").onclick = () => {
+let menu = document.getElementById("sideMenu");
+menu.style.right = menu.style.right === "0px" ? "-300px" : "0px";
 };
 
 window.register = async () => {
@@ -243,9 +271,24 @@ document.getElementById("teamRoom").style.display="block";
 
 let user=auth.currentUser;
 let profile=document.getElementById("profile");
-profile.innerHTML="UID: "+user.uid+
-(user.uid===ADMIN_UID?" <span class='verified'>✔</span>":"");
+let cBadgeHTML = "";
+profile.innerHTML =
+"UID: " + user.uid +
 
+(user.uid === ADMIN_UID ? `
+<span class="verifiedBadge">
+<svg viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="12" fill="#1DA1F2"/>
+<path d="M7 12l3 3 7-7" stroke="white" stroke-width="2" fill="none"/>
+</svg>
+</span>
+` : "")
+
++
+
+(user.uid === "UID_NGUOI_DUOC_CAP_BADGE_C" ? `
+<span class="cBadge">C</span>
+` : "");
 loadChat();
 };
 
@@ -303,8 +346,7 @@ await update(ref(db,"users/"+auth.currentUser.uid+"/premium"),{
 type:type,
 expire:expire
 });
-alert("Mua premium thành công");
-};
+alert("Đặc quyền này hiện chưa được Nhà Phát Hành triển khai hệ thống thanh toán trên ứng dụng. Vui lòng chờ cập nhật trong phiên bản sắp tới.");
 </script>
 </body>
 </html>
